@@ -54,6 +54,10 @@ def audit_block(path, location, block):
     # A fixed name makes every ref share one queue, so a PR cancels main's run.
     if EXPRESSION_MARKER not in group:
         findings.append(f"{path}: {location} concurrency group '{group}' is not scoped to a ref")
+    # Without cancelling, the group only serialises runs and stale ones still finish.
+    cancel = block.get("cancel-in-progress") if isinstance(block, dict) else None
+    if cancel in (None, False):
+        findings.append(f"{path}: {location} concurrency does not set cancel-in-progress")
     return findings
 
 
