@@ -19,6 +19,11 @@ class AuditWorkflowTest(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("sets no concurrency", findings[0])
 
+    def test_group_without_an_expression_is_flagged(self):
+        findings = audit_concurrency.audit_workflow(FIXTURES / "static-group.yml")
+        self.assertEqual(len(findings), 1)
+        self.assertIn("group 'ci' is not scoped to a ref", findings[0])
+
     def test_push_only_workflow_is_out_of_scope(self):
         self.assertEqual(audit_concurrency.audit_workflow(FIXTURES / "push-only.yml"), [])
 

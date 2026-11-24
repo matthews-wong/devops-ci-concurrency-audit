@@ -11,6 +11,7 @@ WORKFLOW_DIR = Path(".github/workflows")
 PR_EVENTS = ("pull_request", "pull_request_target")
 # PyYAML (YAML 1.1) loads the bare key `on` as the boolean True.
 ON_KEYS = ("on", True)
+EXPRESSION_MARKER = "${{"
 
 
 def triggers(doc):
@@ -37,6 +38,25 @@ def concurrency_blocks(doc):
     return blocks
 
 
+def group_of(block):
+    """The group name; a bare string is shorthand for `group:` with no cancel."""
+    if isinstance(block, str):
+        return block
+    if isinstance(block, dict):
+        return str(block.get("group", ""))
+    return ""
+
+
+def audit_block(path, location, block):
+    """Problems in one concurrency block of a pull request workflow."""
+    findings = []
+    group = group_of(block)
+    # A fixed name makes every ref share one queue, so a PR cancels main's run.
+    if EXPRESSION_MARKER not in group:
+        findings.append(f"{path}: {location} concurrency group '{group}' is not scoped to a ref")
+    return findings
+
+
 def audit_workflow(path):
     """Return one message per concurrency problem found in `path`."""
     try:
@@ -53,7 +73,7 @@ def audit_workflow(path):
     blocks = concurrency_blocks(doc)
     if not blocks:
         return [f"{path}: runs on pull requests but sets no concurrency"]
-    return []
+    return [m for location, block in blocks for m in audit_block(path, location, block)]
 
 
 def collect(paths):
