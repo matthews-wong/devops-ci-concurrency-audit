@@ -24,6 +24,11 @@ class AuditWorkflowTest(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("group 'ci' is not scoped to a ref", findings[0])
 
+    def test_job_level_group_without_cancel_is_flagged(self):
+        findings = audit_concurrency.audit_workflow(FIXTURES / "no-cancel.yml")
+        self.assertEqual(len(findings), 1)
+        self.assertIn("job 'test' concurrency does not set cancel-in-progress", findings[0])
+
     def test_push_only_workflow_is_out_of_scope(self):
         self.assertEqual(audit_concurrency.audit_workflow(FIXTURES / "push-only.yml"), [])
 

@@ -1,0 +1,11 @@
+name: no-cancel
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: test-${{ github.ref }}
+    steps:
+      - run: echo ok
